@@ -1,7 +1,7 @@
-from types import UnionType
+from types import UnionType, GenericAlias
 from typing import Literal, List, Union
 
-from Builtin import is_builtin_type
+from TypeUtilities.Builtin import is_builtin_type
 
 # TODO: Add capability to traverse/resolve optional types
 
@@ -11,7 +11,7 @@ def is_union_type(item: type | UnionType) -> bool:
     :param item: The item to check
     :return: True if the item is a Union type, False otherwise
     """
-    return type(item) is UnionType or hasattr(item, '__args__')
+    return type(item) is UnionType and hasattr(item, '__args__')
 
 def strip_union_types(item: UnionType, stripped: List[type] | type | UnionType) -> type | UnionType:
     """
@@ -21,9 +21,11 @@ def strip_union_types(item: UnionType, stripped: List[type] | type | UnionType) 
     :return: The stripped type or Union type (if multiple types are left)
     """
     if not is_union_type(item):
-        raise Exception(f'Invalid item type {item}')
+        if type(item) is type or isinstance(item, GenericAlias): # FIXME: Workaround for Lists might not be robust enough
+            return item
+        raise ValueError(f'Invalid type {item}')
 
-    if (type(stripped) not in [list, type, UnionType]) or not is_union_type(stripped):
+    if type(stripped) not in [list, type, UnionType]:
         raise Exception(f'Invalid strip type {stripped}')
 
     filters = []
